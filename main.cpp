@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -30,14 +29,12 @@ bool vvod_mas(float ** & matrix, int & rows, int & columns, string s) {
 	if (!fin.is_open()) {
 		return false;
 	}
-	string line;
-	getline(fin, line);
-	istringstream stream(line);
-	if (stream >> rows && stream >> op && op == ',' && stream >> columns) {
+
+	if (fin >> rows && fin >> op && op == ',' && fin >> columns) {
 		matrix = new float *[rows];
-		for (int i = 0; i<rows; i++) {
+		for (int i = 0; i < rows; i++) {
 			matrix[i] = new float[columns];
-			for ( int j = 0; j<columns; j++) {
+			for (int j = 0; j < columns; j++) {
 				fin >> matrix[i][j];
 			}
 		}
