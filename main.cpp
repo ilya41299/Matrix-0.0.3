@@ -1,9 +1,11 @@
+#include "stdafx.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
 using namespace std;
-bool read(string & s1, char & op, string & s2) {
+
+bool read_name(string & s1, char & op, string & s2) {
 	bool f = false;
 	string line;
 	getline(cin, line);
@@ -22,7 +24,7 @@ bool read(string & s1, char & op, string & s2) {
 	return f;
 }
 
-bool vvod_mas(float ** & matrix, int & rows, int & columns, string s) {
+bool vvod_mas(float ** &mas, int &rows, int &columns, string s) {
 	char op;
 	ifstream fin;
 	fin.open(s.c_str());
@@ -31,11 +33,11 @@ bool vvod_mas(float ** & matrix, int & rows, int & columns, string s) {
 	}
 
 	if (fin >> rows && fin >> op && op == ',' && fin >> columns) {
-		matrix = new float *[rows];
+		mas = new float *[rows];
 		for (int i = 0; i < rows; i++) {
-			matrix[i] = new float[columns];
+			mas[i] = new float[columns];
 			for (int j = 0; j < columns; j++) {
-				fin >> matrix[i][j];
+				fin >> mas[i][j];
 			}
 		}
 	}
@@ -43,62 +45,70 @@ bool vvod_mas(float ** & matrix, int & rows, int & columns, string s) {
 	return true;
 }
 
-void add(float ** mas1, float ** mas2, int rows, int columns) {
-	cout << endl;
+void destroy(int rows1, float ** &mas1, float ** &result_mas)
+{
+	for (int i = 0; i<rows1; ++i) {
+		delete[]mas1[i];
+	}
+	delete[]mas1;
+	delete[]result_mas;
+}
+
+void add(float ** mas1, float ** mas2, int rows, int columns, float ** &result_mas) {
+	result_mas = new float *[rows];
 	for (int i = 0; i < rows; i++) {
+		result_mas[i] = new float[columns];
 		for (int j = 0; j < columns; j++) {
-			cout << mas1[i][j] + mas2[i][j] << " ";
+			result_mas[i][j] = (mas1[i][j] + mas2[i][j]);
 		}
-		cout << endl;
 	}
 }
 
-void sub(float ** mas1, float ** mas2, int rows, int columns) {
-	cout << endl;
+void sub(float ** mas1, float ** mas2, int rows, int columns, float ** &result_mas) {
+	result_mas = new float *[rows];
 	for (int i = 0; i < rows; i++) {
+		result_mas[i] = new float[columns];
 		for (int j = 0; j < columns; j++) {
-			cout << mas1[i][j] - mas2[i][j] << " ";
+			result_mas[i][j] = (mas1[i][j] - mas2[i][j]);
 		}
-		cout << endl;
 	}
 }
 
-void mult(float ** mas1, float ** mas2, int rows, int columns) {
-	cout << endl;
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < columns; j++) {
-			float res = 0;
-			for (int k = 0; k < rows; k++)
-				res += mas1[i][k] * mas2[k][j];
-			cout << res << " ";
+void mult(float ** mas1, float ** mas2, int rows1, int columns1, int rows2, int columns2, float ** &result_mas) {
+	int result_rows = rows1;
+	int result_columns = columns2;
+	result_mas = new float *[result_rows];
+	for (int i = 0; i<result_rows; ++i) {
+		result_mas[i] = new float[result_columns];
+		for (int j = 0; j<result_columns; ++j) {
+			float result = 0;
+			for (int k = 0; k<columns1; ++k) {
+				result += mas1[i][k] * mas2[k][j];
+			}
+			result_mas[i][j] = result;
 		}
-		cout << endl;
 	}
 }
 
-void Trans(float ** mas, int rows, int columns) {
-	float ** T_mas = new float *[rows];
+void Trans(float ** &result_mas, float ** mas1, int rows, int columns) {
+	result_mas = new float *[rows];
 	for (int i = 0; i < columns; i++) {
-		T_mas[i] = new float[rows];
+		result_mas[i] = new float[columns];
 		for (int j = 0; j < rows; j++) {
-			T_mas[i][j] = mas[j][i];
+			result_mas[i][j] = mas1[j][i];
 		}
-	}
-	for (int i = 0; i < columns; i++) {
-		for (int j = 0; j < rows; j++) {
-			cout << T_mas[i][j] << " ";
-		}
-		cout << endl;
 	}
 }
 
-void revers_mas(float ** mas, float ** mas1, int rows) {
-	float a, b, result;
+bool revers_mas(float ** &result_mas, float ** mas1, int rows) {
+	float a, b, result;                          // Результирующая сатрица принимает вид единичной матрицы
 	for (int i = 0; i < rows; i++) {
-		mas[i] = new float[rows];
+		result_mas[i] = new float[rows];
 		for (int j = 0; j < rows; j++) {
-			mas[i][j] = 0;
-			mas[i][i] = 1;
+			if (i == j) {
+				result_mas[i][j] = 1;
+			}
+			else result_mas[i][j] = 0;
 		}
 	}
 	for (int i = 0; i < rows; i++) {
@@ -107,38 +117,37 @@ void revers_mas(float ** mas, float ** mas1, int rows) {
 			b = mas1[j][i];
 			for (int k = 0; k < rows; k++) {
 				mas1[j][k] = mas1[i][k] * b - mas1[j][k] * a;
-				mas[j][k] = mas[i][k] * b - mas[j][k] * a;
+				result_mas[j][k] = result_mas[i][k] * b - result_mas[j][k] * a;
 			}
 		}
 	}
 	for (int i = 0; i < rows; i++) {
-		for (int j = rows - 1; j > -1; j--) {
+		for (int j = rows - 1; j >= 0; j--) {
 			result = 0;
 			for (int k = rows - 1; k > j; k--) {
-				result += mas1[j][k] * mas[k][i];
+				result += mas1[j][k] * result_mas[k][i];
 				if (mas1[j][j] == 0) {
 					for (i = 0; i < rows; i++) {
-						delete[] mas[i];
-						delete[]mas;
+						delete[] result_mas[i];
+						delete[]result_mas;
 					}
 				}
 			}
-			mas[j][i] = (mas[j][i] - result) / mas1[j][j];
+			if (mas1[j][j] == 0) {
+				cout << "There is no reverse matrix" << endl;
+				return false;
+			}
+			result_mas[j][i] = (result_mas[j][i] - result) / mas1[j][j];
 		}
 	}
-	cout << endl;
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < rows; j++) {
-			cout << mas[i][j] << " ";
-		}
-		cout << endl;
-	}
+	return true;
 }
+
 
 int main() {
 	string s1, s2;
 	char op;
-	if (!(read(s1, op, s2))) {
+	if (!(read_name(s1, op, s2))) {
 		cout << "ERROR" << endl;
 		return -1;
 	}
@@ -148,41 +157,58 @@ int main() {
 		cout << "An error has occured while reading input data vvod";
 		return -1;
 	}
+	float **result_mas = new float *[columns1];
 	if (op == 'T') {
-		Trans(mas1, rows1, columns1);
+		Trans(result_mas, mas1, rows1, columns1);
 	}
-	else if (rows1 == columns1 && (op == '-' || op == '+' || op == '*')) {
+	if (op == 'R' && rows1 == columns1) {
+
+		if (!(revers_mas(result_mas, mas1, rows1))) {
+			return -1;
+		}
+	}
+	if (op == '*') {
+		float ** mas2; 
+		int rows2, columns2;
+		if (vvod_mas(mas2, rows2, columns2, s2) && rows1 == columns2) {
+			mult(mas1, mas2, rows1, columns1, rows2, columns2, result_mas);
+		}
+		else {
+			cout << "An error has occured while reading input data" << endl;
+			destroy(rows1, mas1, result_mas);
+			return -1;
+		}
+	}
+	if (rows1 == columns1 && (op == '-' || op == '+')) {
 		float ** mas2;
 		int rows2, columns2;
-		if (vvod_mas(mas2, rows2, columns2, s2) && rows1 == rows2 && columns1 == columns2) {  
+		if (vvod_mas(mas2, rows2, columns2, s2) && rows1 == rows2 && columns1 == columns2) {
 			switch (op) {
 			case '+': {
-				add(mas1, mas2, rows1, columns1);
+				add(mas1, mas2, rows1, columns1, result_mas);
 				break;
 			}
 			case '-': {
-				sub(mas1, mas2, rows1, columns1);
+				sub(mas1, mas2, rows1, columns1, result_mas);
 				break;
-			}
-			case '*': {
-				if (columns1 == rows2) {
-					mult(mas1, mas2, rows1, columns1);
-					break;
-				}
-				else {
-					cout << "An error has occured while reading input data"; 
-					break;
-				}
 			}
 			default: cout << "An error has occured while reading input data";
 			}
 		}
 	}
-	else if (op == 'R' && rows1 == columns1) {
-		float **mas = new float *[columns1];
-		revers_mas(mas, mas1, rows1);
-	}
-	else 
+	
+	if (op != 'T' && op != 'R' && op != '+' && op != '-' && op != '*') {
 		cout << "An error has occured while reading input data";
+		destroy(rows1, mas1, result_mas);
+		return -1;
+	}
 
+	cout << endl;
+	for (int i = 0; i < rows1; i++) {
+		for (int j = 0; j < columns1; j++) {
+			cout << result_mas[i][j] << ' ';
+		}
+		cout << endl;
+	}
+	destroy(rows1, mas1, result_mas);
 }
