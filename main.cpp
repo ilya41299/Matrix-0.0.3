@@ -154,7 +154,7 @@ int main() {
 		cout << "An error has occured while reading input data";
 		return -1;
 	}
-	
+
 	if (op == '*') {
 		float ** mas2;
 		if (vvod_mas(mas2, rows2, columns2, s2) && rows1 == columns2) {
